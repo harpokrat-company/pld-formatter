@@ -17,6 +17,8 @@
   },
   "homepage": "https://gitlab.com/harpokrat/pld-formatter#README",
   "dependencies": {
-    "csv-parse": "^4.8.5"
+    "array-to-tree": "^3.3.2",
+    "csv-parser": "^2.3.2",
+    "lodash": "^4.17.15"
   }
 }
