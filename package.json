@@ -1,0 +1,22 @@
+{
+  "name": "pld-formatter",
+  "version": "1.0.0",
+  "description": "Pld formatter",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/harpokrat/pld-formatter.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/harpokrat/pld-formatter/issues"
+  },
+  "homepage": "https://gitlab.com/harpokrat/pld-formatter#README",
+  "dependencies": {
+    "csv-parse": "^4.8.5"
+  }
+}
