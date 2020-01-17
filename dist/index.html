@@ -1,10 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
+
     <title>PLD Formatter</title>
 </head>
 <body>
+
+<input type="file" onchange="pldFormatter.loadCsvFile(this.files[0], 'pld-output-container')">
+<div id="pld-output-container"></div>
 
 <script src="main.js"></script>
 </body>

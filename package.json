@@ -22,7 +22,8 @@
   "dependencies": {
     "array-to-tree": "^3.3.2",
     "csv-parser": "^2.3.2",
-    "lodash": "^4.17.15"
+    "lodash": "^4.17.15",
+    "jquery": "latest"
   },
   "devDependencies": {
     "webpack": "^4.41.5",

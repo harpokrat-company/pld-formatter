@@ -1,7 +1,7 @@
 const csv = require('csv-parser');
 const arrayToTree = require('array-to-tree');
 
-export default (raw_csv) => {
+const parseCSV = (raw_csv) => {
     const flat_csv = [];
     const parser = csv(
         {
@@ -27,3 +27,5 @@ export default (raw_csv) => {
     parser.end();
     return promise;
 };
+
+module.exports = parseCSV;
