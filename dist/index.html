@@ -2,13 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-
     <title>PLD Formatter</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<input type="file" onchange="pldFormatter.loadCsvFile(this.files[0], 'pld-output-container')">
-<div id="pld-output-container"></div>
+<div id="user-input">
+    <input type="file" accept=".csv" onchange="pldFormatter.loadCsvFile(this.files[0], 'pld-output-container')">
+    <br>
+    <br>
+    <br>
+    PLD Preview:
+    <br>
+</div>
+<main class="pld" id="pld-output-container">
+</main>
 
 <script src="main.js"></script>
 </body>

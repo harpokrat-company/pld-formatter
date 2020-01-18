@@ -1,0 +1,94 @@
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+@page {
+    size: A4 portrait;
+}
+
+@media screen {
+    .pld {
+        width: 19cm;
+        padding: 2cm 1cm;
+        border: black dashed 1px;
+    }
+}
+
+@media print {
+    #user-input {
+        display: none;
+    }
+    .pld section, .projects-cards article {
+        page-break-after: always;
+    }
+}
+
+h1 {
+    margin-left: 1cm;
+    color: #555;
+    font-size: 3em;
+    margin-block-end: 1.5em;
+}
+
+.projects-cards h2 {
+    margin: 1em 2cm;
+    padding: 4mm 8mm;
+    color: white;
+    background-color: dodgerblue;
+    font-size: 1.4em;
+    margin-block-end: 1em;
+}
+
+.cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: stretch;
+    margin: 1mm;
+}
+
+.projects-cards .cards-container {
+    justify-content: flex-start;
+}
+
+.vertical-cards-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 2mm 4mm;
+    font-size: 0.8em;
+    margin: 1mm;
+    background-color: rgba(30, 144, 255, 1);
+    color: white;
+}
+
+.organigram .card {
+    background-color: dodgerblue;
+    color: white;
+    padding: 4mm 8mm;
+    font-weight: bold;
+    justify-content: space-around;
+    width: 2.5cm;
+}
+
+.organigram .sub-projects .card {
+    background-color: rgba(30, 144, 255, .8);
+}
+
+.projects-cards .card {
+    background-color: rgba(30, 144, 255, .6);
+    color: black;
+    max-width: 3cm;
+}
+
+.projects-cards .card:first-child {
+    background-color: rgba(30, 144, 255, .8);
+    color: white;
+    font-weight: bold;
+    justify-content: space-around;
+}
