@@ -1,7 +1,11 @@
 let $ = require("jquery");
 
-const getPackageId = (package) => {
-    return '#' + package.id.toString();
+const getPackageId = (workPackage) => {
+    return '#' + workPackage.id.toString();
+};
+
+const packageStr = (workPackage) => {
+    return workPackage.subject + ' (' + getPackageId(workPackage) + ')'
 };
 
 const insertElement = (container, rawElement) => {
@@ -21,13 +25,13 @@ const insertSection = (container, title = '', classes = '') => {
     return section;
 };
 
-const insertArticle = (container, title = '', classes = '') => {
+const insertArticle = (container, title = '', classes = '', titleElement = 'h2') => {
     const section = insertElement(
         container,
         '<article class="' + classes + '"></article>'
     );
     if (title.length > 0) {
-        insertElement(section, '<h2>' + title + '</h2>');
+        insertElement(section, '<' + titleElement + '>' + title + '</' + titleElement + '>');
     }
     return section;
 };
@@ -63,9 +67,9 @@ const insertOrganigram = (projectTree, container) => {
 const insertEpicCards = (container, epic) => {
     if (epic.children) {
         const epicContainer = insertVerticalCardContainer(container);
-        insertCard(epicContainer, epic.subject + ' (' + getPackageId(epic) + ')');
+        insertCard(epicContainer, packageStr(epic));
         epic.children.forEach((card) => {
-            insertCard(epicContainer, card.subject + ' (' + getPackageId(card) + ')');
+            insertCard(epicContainer, packageStr(card));
         });
     }
 };
@@ -81,6 +85,78 @@ const insertProjectsCards = (projectTree, container) => {
     const section = insertSection(container, 'Carte des livrables', 'projects-cards');
     Object.keys(projectTree).forEach((project, id) => {
         insertProjectCards(section, project, projectTree[project]);
+    });
+};
+
+const getProgressBar = (workPackage) => {
+    const percent = workPackage['progress-'] + '%';
+    return '<div class="progress-bar-container">' +
+        '<div class="progress-bar" style="width:' + percent + '"></div>' +
+        '<span>' + percent + '</span>' +
+        '</div>';
+};
+
+const insertUserStory = (container, userStory) => {
+    const table = insertElement(container, '<table class="user-story"></table>');
+    insertElement(table, '<thead><tr><th colspan="2">' + packageStr(userStory) + '</th></tr></thead>');
+    const tableBody = insertElement(table, '<tbody></tbody>');
+    if (userStory.description.length > 0) {
+        insertElement(tableBody, '<tr><td colspan="2"><b>Description:</b><br>' + userStory.description + '</td></tr>');
+    }
+    if (userStory.children) {
+        const dodTableContainer =
+            insertElement(
+                insertElement(
+                    tableBody, '<tr></tr>'
+                ), '<td colspan="2"></td>'
+            );
+        insertElement(dodTableContainer, '<b>Definition of done:</b>');
+        const dodTable = insertElement(dodTableContainer, '<table class="definition-of-done"></table>');
+        insertElement(dodTable, '<thead><tr><th>Tache</th><th>État</th><th>Charge</th><th>Avancement</th></tr></thead>');
+        const dodTableBody = insertElement(dodTable, '<tbody></tbody>');
+        userStory.children.forEach((task) => {
+            insertElement(dodTableBody, '<tr>' +
+                '<td>' + packageStr(task) + '</td>' +
+                '<td>' + task.status + '</td>' +
+                '<td>' + (task['estimated-time'] ? task['estimated-time'] : '?') + ' h/H</td>' +
+                '<td>' + getProgressBar(task) + '</td>' +
+                '</tr>');
+        });
+    }
+    const tableFooter = insertElement(table, '<tfoot></tfoot>');
+    insertElement(tableFooter, '<tr><td><b>Charge estimée:</b></td><td>' + (userStory['estimated-time'] ? userStory['estimated-time'] : '?') + ' h/H</td></tr>');
+    insertElement(tableFooter, '<tr><td><b>Avancement:</b></td><td>' + getProgressBar(userStory) + '</td></tr>');
+};
+
+const insertFeatureUserStories = (container, features) => {
+    const featureContainer = insertArticle(container, packageStr(features), 'feature-user-stories', 'h4');
+    if (features.children) {
+        features.children.forEach((userStory) => {
+            insertUserStory(featureContainer, userStory);
+        });
+    }
+};
+
+const insertEpicUserStories = (container, epic) => {
+    const epicContainer = insertArticle(container, packageStr(epic), 'epic-user-stories', 'h3');
+    if (epic.children) {
+        epic.children.forEach((feature) => {
+            insertFeatureUserStories(epicContainer, feature);
+        });
+    }
+};
+
+const insertProjectUserStories = (container, projectName, projectTree) => {
+    const projectContainer = insertArticle(container, projectName, 'project-user-stories');
+    projectTree.forEach((epic) => {
+        insertEpicUserStories(projectContainer, epic);
+    });
+};
+
+const insertUserStories = (projectTree, container) => {
+    const section = insertSection(container, 'User stories', 'user-stories');
+    Object.keys(projectTree).forEach((project, id) => {
+        insertProjectUserStories(section, project, projectTree[project]);
     });
 };
 
@@ -100,6 +176,7 @@ const formatProjectTree = (projectTree, containerId) => {
     console.log(projects);
     insertOrganigram(projects, container);
     insertProjectsCards(projects, container);
+    insertUserStories(projects, container);
     // TODO
 };
 
