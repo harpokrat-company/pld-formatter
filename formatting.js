@@ -1,5 +1,9 @@
 let $ = require("jquery");
 
+const getPackageId = (package) => {
+    return '#' + package.id.toString();
+};
+
 const insertElement = (container, rawElement) => {
     const element = $(rawElement);
     container.append(element);
@@ -52,34 +56,31 @@ const insertOrganigram = (projectTree, container) => {
     const subProjectsContainer = insertCardContainer(section, 'sub-projects');
     insertCard(mainProjectContainer, 'Harpokrat'); // TODO dynamic name
     Object.keys(projectTree).forEach((project, id) => {
-        insertCard(subProjectsContainer, (id + 1).toString() + '. ' + project);
+        insertCard(subProjectsContainer, project);
     });
 };
 
-const insertEpicCards = (container, epic, epicId) => {
+const insertEpicCards = (container, epic) => {
     if (epic.children) {
         const epicContainer = insertVerticalCardContainer(container);
-        insertCard(epicContainer, epicId + ' ' + epic.subject);
-        epic.children.forEach((card, id) => {
-            const cardId = epicId + '.' + (id + 1).toString();
-            insertCard(epicContainer, cardId + ' ' + card.subject);
+        insertCard(epicContainer, epic.subject + ' (' + getPackageId(epic) + ')');
+        epic.children.forEach((card) => {
+            insertCard(epicContainer, card.subject + ' (' + getPackageId(card) + ')');
         });
     }
 };
 
-const insertProjectCards = (container, projectName, projectId, projectTree) => {
-    const projectContainer = insertCardContainer(insertArticle(container, projectId + '. ' + projectName));
-    projectTree.forEach((epic, id) => {
-        const epicId = projectId + '.' + (id + 1).toString();
-        insertEpicCards(projectContainer, epic, epicId);
+const insertProjectCards = (container, projectName, projectTree) => {
+    const projectContainer = insertCardContainer(insertArticle(container, projectName));
+    projectTree.forEach((epic) => {
+        insertEpicCards(projectContainer, epic);
     });
 };
 
 const insertProjectsCards = (projectTree, container) => {
     const section = insertSection(container, 'Carte des livrables', 'projects-cards');
     Object.keys(projectTree).forEach((project, id) => {
-        const projectId = (id + 1).toString();
-        insertProjectCards(section, project, projectId, projectTree[project]);
+        insertProjectCards(section, project, projectTree[project]);
     });
 };
 
@@ -96,6 +97,7 @@ const formatProjectTree = (projectTree, containerId) => {
     let container = $('#' + containerId);
     container.empty();
     const projects = splitInProjects(projectTree);
+    console.log(projects);
     insertOrganigram(projects, container);
     insertProjectsCards(projects, container);
     // TODO
