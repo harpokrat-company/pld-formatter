@@ -8,6 +8,16 @@ const packageStr = (workPackage) => {
     return workPackage.subject + ' (' + getPackageId(workPackage) + ')'
 };
 
+const checkPackage = (workPackage, depth) => {
+    if (depth < 0)
+        return true;
+    if (depth === 1)
+        return workPackage.children && workPackage.children.length > 0;
+    if (!workPackage.children || workPackage.children.length === 0)
+        return false;
+    return workPackage.children.some((child) => checkPackage(child, depth - 1));
+};
+
 const insertElement = (container, rawElement) => {
     const element = $(rawElement);
     container.append(element);
@@ -60,12 +70,14 @@ const insertOrganigram = (projectTree, container) => {
     const subProjectsContainer = insertCardContainer(section, 'sub-projects');
     insertCard(mainProjectContainer, 'Harpokrat'); // TODO dynamic name
     Object.keys(projectTree).forEach((project, id) => {
-        insertCard(subProjectsContainer, project);
+        if (projectTree[project].some((epic) => checkPackage(epic, 1))) {
+            insertCard(subProjectsContainer, project);
+        }
     });
 };
 
 const insertEpicCards = (container, epic) => {
-    if (epic.children) {
+    if (checkPackage(epic, 1)) {
         const epicContainer = insertVerticalCardContainer(container);
         insertCard(epicContainer, packageStr(epic));
         epic.children.forEach((card) => {
@@ -84,7 +96,9 @@ const insertProjectCards = (container, projectName, projectTree) => {
 const insertProjectsCards = (projectTree, container) => {
     const section = insertSection(container, 'Carte des livrables', 'projects-cards');
     Object.keys(projectTree).forEach((project, id) => {
-        insertProjectCards(section, project, projectTree[project]);
+        if (projectTree[project].some((epic) => checkPackage(epic, 1))) {
+            insertProjectCards(section, project, projectTree[project]);
+        }
     });
 };
 
@@ -103,7 +117,7 @@ const insertUserStory = (container, userStory) => {
     if (userStory.description.length > 0) {
         insertElement(tableBody, '<tr><td colspan="2"><b>Description:</b><br>' + userStory.description + '</td></tr>');
     }
-    if (userStory.children) {
+    if (checkPackage(userStory, 1)) {
         const dodTableContainer =
             insertElement(
                 insertElement(
@@ -129,8 +143,8 @@ const insertUserStory = (container, userStory) => {
 };
 
 const insertFeatureUserStories = (container, features) => {
-    const featureContainer = insertArticle(container, packageStr(features), 'feature-user-stories', 'h4');
-    if (features.children) {
+    if (checkPackage(features, 1)) {
+        const featureContainer = insertArticle(container, packageStr(features), 'feature-user-stories', 'h4');
         features.children.forEach((userStory) => {
             insertUserStory(featureContainer, userStory);
         });
@@ -138,8 +152,8 @@ const insertFeatureUserStories = (container, features) => {
 };
 
 const insertEpicUserStories = (container, epic) => {
-    const epicContainer = insertArticle(container, packageStr(epic), 'epic-user-stories', 'h3');
-    if (epic.children) {
+    if (checkPackage(epic, 2)) {
+        const epicContainer = insertArticle(container, packageStr(epic), 'epic-user-stories', 'h3');
         epic.children.forEach((feature) => {
             insertFeatureUserStories(epicContainer, feature);
         });
@@ -149,14 +163,18 @@ const insertEpicUserStories = (container, epic) => {
 const insertProjectUserStories = (container, projectName, projectTree) => {
     const projectContainer = insertArticle(container, projectName, 'project-user-stories');
     projectTree.forEach((epic) => {
-        insertEpicUserStories(projectContainer, epic);
+        if (checkPackage(epic, 2)) {
+            insertEpicUserStories(projectContainer, epic);
+        }
     });
 };
 
 const insertUserStories = (projectTree, container) => {
     const section = insertSection(container, 'User stories', 'user-stories');
     Object.keys(projectTree).forEach((project, id) => {
-        insertProjectUserStories(section, project, projectTree[project]);
+        if (projectTree[project].some((epic) => checkPackage(epic, 2))) {
+            insertProjectUserStories(section, project, projectTree[project]);
+        }
     });
 };
 
