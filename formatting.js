@@ -65,7 +65,7 @@ const insertCard = (container, content, classes = '') =>
     );
 
 const insertOrganigram = (projectTree, container) => {
-    const section = insertSection(container, 'Organigramme', 'organigram');
+    const section = insertSection(container, 'Organizational chart', 'organigram');
     const mainProjectContainer = insertCardContainer(section, 'main-project');
     const subProjectsContainer = insertCardContainer(section, 'sub-projects');
     insertCard(mainProjectContainer, 'Harpokrat'); // TODO dynamic name
@@ -94,7 +94,7 @@ const insertProjectCards = (container, projectName, projectTree) => {
 };
 
 const insertProjectsCards = (projectTree, container) => {
-    const section = insertSection(container, 'Carte des livrables', 'projects-cards');
+    const section = insertSection(container, 'Projects cards', 'projects-cards');
     Object.keys(projectTree).forEach((project, id) => {
         if (projectTree[project].some((epic) => checkPackage(epic, 1))) {
             insertProjectCards(section, project, projectTree[project]);
@@ -114,6 +114,9 @@ const insertUserStory = (container, userStory) => {
     const table = insertElement(container, '<table class="user-story"></table>');
     insertElement(table, '<thead><tr><th colspan="2">' + packageStr(userStory) + '</th></tr></thead>');
     const tableBody = insertElement(table, '<tbody></tbody>');
+    if (userStory.as.length > 0 && userStory['i-wantto'].length > 0) {
+        insertElement(tableBody, '<tr><td><b>As:</b> ' + userStory.as + '</td><td><b>I want to:</b> ' + userStory['i-wantto'] + '</td></tr>');
+    }
     if (userStory.description.length > 0) {
         insertElement(tableBody, '<tr><td colspan="2"><b>Description:</b><br>' + userStory.description + '</td></tr>');
     }
@@ -126,7 +129,7 @@ const insertUserStory = (container, userStory) => {
             );
         insertElement(dodTableContainer, '<b>Definition of done:</b>');
         const dodTable = insertElement(dodTableContainer, '<table class="definition-of-done"></table>');
-        insertElement(dodTable, '<thead><tr><th>Tache</th><th>État</th><th>Charge</th><th>Avancement</th></tr></thead>');
+        insertElement(dodTable, '<thead><tr><th>Task</th><th>State</th><th>Estimated time</th><th>Progress</th></tr></thead>');
         const dodTableBody = insertElement(dodTable, '<tbody></tbody>');
         userStory.children.forEach((task) => {
             insertElement(dodTableBody, '<tr>' +
@@ -138,8 +141,8 @@ const insertUserStory = (container, userStory) => {
         });
     }
     const tableFooter = insertElement(table, '<tfoot></tfoot>');
-    insertElement(tableFooter, '<tr><td><b>Charge estimée:</b></td><td>' + (userStory['estimated-time'] ? userStory['estimated-time'] : '?') + ' h/H</td></tr>');
-    insertElement(tableFooter, '<tr><td><b>Avancement:</b></td><td>' + getProgressBar(userStory) + '</td></tr>');
+    insertElement(tableFooter, '<tr><td><b>Estimated time:</b></td><td>' + (userStory['estimated-time'] ? userStory['estimated-time'] : '?') + ' h/H</td></tr>');
+    insertElement(tableFooter, '<tr><td><b>Progress:</b></td><td>' + getProgressBar(userStory) + '</td></tr>');
 };
 
 const insertFeatureUserStories = (container, features) => {
@@ -195,7 +198,6 @@ const formatProjectTree = (projectTree, containerId) => {
     insertOrganigram(projects, container);
     insertProjectsCards(projects, container);
     insertUserStories(projects, container);
-    // TODO
 };
 
 module.exports = formatProjectTree;
