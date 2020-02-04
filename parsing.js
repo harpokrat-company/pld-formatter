@@ -15,7 +15,8 @@ const parseCSV = (raw_csv) => {
         parser
             .on('data', (data) => {
                 data.id = parseInt(data.id, 10);
-                data.parent_id = parseInt(data.parent.replace(/\D/g, ''), 10) || undefined;
+                if (typeof data.parent !== 'undefined' && data.parent.length > 0)
+                    data.parent_id = parseInt(data.parent.match(/#(\d+):/)[1], 10) || undefined;
                 flat_csv.push(data);
             })
             .on('end', () => {

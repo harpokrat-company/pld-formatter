@@ -9,11 +9,9 @@ const packageStr = (workPackage) => {
 };
 
 const checkPackage = (workPackage, depth) => {
-    if (depth < 0)
-        return true;
-    if (depth === 1)
-        return workPackage.children && workPackage.children.length > 0;
-    if (!workPackage.children || workPackage.children.length === 0)
+    if (depth <= 0)
+        return typeof workPackage.children !== 'undefined' && workPackage.children.length > 0;
+    if (typeof workPackage.children === 'undefined' || workPackage.children.length === 0)
         return false;
     return workPackage.children.some((child) => checkPackage(child, depth - 1));
 };
@@ -69,19 +67,21 @@ const insertOrganigram = (projectTree, container) => {
     const mainProjectContainer = insertCardContainer(section, 'main-project');
     const subProjectsContainer = insertCardContainer(section, 'sub-projects');
     insertCard(mainProjectContainer, 'Harpokrat'); // TODO dynamic name
-    Object.keys(projectTree).forEach((project, id) => {
-        if (projectTree[project].some((epic) => checkPackage(epic, 1))) {
+    Object.keys(projectTree).forEach((project) => {
+        if (projectTree[project].some((epic) => checkPackage(epic, 2))) {
             insertCard(subProjectsContainer, project);
         }
     });
 };
 
 const insertEpicCards = (container, epic) => {
-    if (checkPackage(epic, 1)) {
+    if (checkPackage(epic, 2)) {
         const epicContainer = insertVerticalCardContainer(container);
         insertCard(epicContainer, packageStr(epic));
-        epic.children.forEach((card) => {
-            insertCard(epicContainer, packageStr(card));
+        epic.children.forEach((feature) => {
+            if (checkPackage(feature, 1)) {
+                insertCard(epicContainer, packageStr(feature));
+            }
         });
     }
 };
@@ -96,7 +96,7 @@ const insertProjectCards = (container, projectName, projectTree) => {
 const insertProjectsCards = (projectTree, container) => {
     const section = insertSection(container, 'Projects cards', 'projects-cards');
     Object.keys(projectTree).forEach((project, id) => {
-        if (projectTree[project].some((epic) => checkPackage(epic, 1))) {
+        if (projectTree[project].some((epic) => checkPackage(epic, 2))) {
             insertProjectCards(section, project, projectTree[project]);
         }
     });
@@ -120,7 +120,8 @@ const insertUserStory = (container, userStory) => {
     if (userStory.description.length > 0) {
         insertElement(tableBody, '<tr><td colspan="2"><b>Description:</b><br>' + userStory.description + '</td></tr>');
     }
-    if (checkPackage(userStory, 1)) {
+    let userStoryEstimatedTime = 0;
+    if (checkPackage(userStory, 0)) {
         const dodTableContainer =
             insertElement(
                 insertElement(
@@ -132,16 +133,19 @@ const insertUserStory = (container, userStory) => {
         insertElement(dodTable, '<thead><tr><th>Task</th><th>State</th><th>Estimated time</th><th>Progress</th></tr></thead>');
         const dodTableBody = insertElement(dodTable, '<tbody></tbody>');
         userStory.children.forEach((task) => {
+            const estimatedTime = (task['estimated-time'] ? task['estimated-time'] : '0');
+            userStoryEstimatedTime += parseFloat(estimatedTime);
             insertElement(dodTableBody, '<tr>' +
                 '<td>' + packageStr(task) + '</td>' +
                 '<td>' + task.status + '</td>' +
-                '<td>' + (task['estimated-time'] ? task['estimated-time'] : '?') + ' h/H</td>' +
+                '<td>' + estimatedTime + ' h/H</td>' +
                 '<td>' + getProgressBar(task) + '</td>' +
                 '</tr>');
         });
     }
+    userStoryEstimatedTime = Math.round(userStoryEstimatedTime * 10) / 10;
     const tableFooter = insertElement(table, '<tfoot></tfoot>');
-    insertElement(tableFooter, '<tr><td><b>Estimated time:</b></td><td>' + (userStory['estimated-time'] ? userStory['estimated-time'] : '?') + ' h/H</td></tr>');
+    insertElement(tableFooter, '<tr><td><b>Estimated time:</b></td><td>' + userStoryEstimatedTime.toString() + ' h/H</td></tr>');
     insertElement(tableFooter, '<tr><td><b>Progress:</b></td><td>' + getProgressBar(userStory) + '</td></tr>');
 };
 
@@ -166,9 +170,7 @@ const insertEpicUserStories = (container, epic) => {
 const insertProjectUserStories = (container, projectName, projectTree) => {
     const projectContainer = insertArticle(container, projectName, 'project-user-stories');
     projectTree.forEach((epic) => {
-        if (checkPackage(epic, 2)) {
-            insertEpicUserStories(projectContainer, epic);
-        }
+        insertEpicUserStories(projectContainer, epic);
     });
 };
 
