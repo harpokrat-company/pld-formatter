@@ -21,6 +21,11 @@ body {
     .pld section, .projects-cards article {
         page-break-after: always;
     }
+    table, tbody, thead, tr, td, th {
+        break-inside: avoid-page;
+        page-break-inside: avoid;
+    /*    TODO !! Not working */
+    }
 }
 
 h1 {
@@ -107,12 +112,21 @@ h2 {
     background-color: rgba(30, 144, 255, .2);
 }
 
+.user-story.rejected td {
+    background-color: rgba(80, 80, 80, .2);
+}
+
 .user-story > thead th {
     padding: 2mm;
     background-color: rgba(30, 144, 255, .9);
     color: white;
     font-weight: bold;
     font-size: 1.2em;
+}
+
+.user-story.rejected > thead th {
+    background-color: rgba(80, 80, 80, .9);
+    text-decoration: line-through;
 }
 
 .definition-of-done {
@@ -126,6 +140,10 @@ h2 {
     width: 10%;
     vertical-align: top;
     background-color: rgba(30, 144, 255, .2);
+}
+
+.rejected .definition-of-done td {
+    background-color: rgba(80, 80, 80, .2);
 }
 
 .definition-of-done td:first-child {
@@ -146,6 +164,10 @@ h2 {
     font-weight: bold;
 }
 
+.rejected .definition-of-done > thead th {
+    background-color: rgba(80, 80, 80, .4);
+}
+
 .user-story .progress-bar-container {
     position: relative;
     width: 100%;
@@ -164,4 +186,8 @@ h2 {
     height: 100%;
     top: 0;
     background-color: rgba(80, 220, 100, 1);
+}
+
+.user-story.rejected .progress-bar {
+    background-color: rgba(50, 50, 50, 1);
 }

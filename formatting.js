@@ -8,12 +8,18 @@ const packageStr = (workPackage) => {
     return workPackage.subject + ' (' + getPackageId(workPackage) + ')'
 };
 
+const packageChildren = workPackage => {
+    if (typeof workPackage.children === 'undefined')
+        return [];
+    return workPackage.children.filter(child => child.status !== 'On hold');
+};
+
 const checkPackage = (workPackage, depth) => {
     if (depth <= 0)
-        return typeof workPackage.children !== 'undefined' && workPackage.children.length > 0;
-    if (typeof workPackage.children === 'undefined' || workPackage.children.length === 0)
+        return packageChildren(workPackage).length > 0;
+    if (packageChildren(workPackage).length === 0)
         return false;
-    return workPackage.children.some((child) => checkPackage(child, depth - 1));
+    return packageChildren(workPackage).some((child) => checkPackage(child, depth - 1));
 };
 
 const insertElement = (container, rawElement) => {
@@ -78,7 +84,7 @@ const insertEpicCards = (container, epic) => {
     if (checkPackage(epic, 2)) {
         const epicContainer = insertVerticalCardContainer(container);
         insertCard(epicContainer, packageStr(epic));
-        epic.children.forEach((feature) => {
+        packageChildren(epic).forEach((feature) => {
             if (checkPackage(feature, 1)) {
                 insertCard(epicContainer, packageStr(feature));
             }
@@ -103,7 +109,7 @@ const insertProjectsCards = (projectTree, container) => {
 };
 
 const getProgressBar = (workPackage) => {
-    const percent = workPackage['progress-'] + '%';
+    const percent = workPackage['status'] === 'Done' ? '100%' : (workPackage['progress-'] + '%');
     return '<div class="progress-bar-container">' +
         '<div class="progress-bar" style="width:' + percent + '"></div>' +
         '<span>' + percent + '</span>' +
@@ -111,8 +117,12 @@ const getProgressBar = (workPackage) => {
 };
 
 const insertUserStory = (container, userStory) => {
-    const table = insertElement(container, '<table class="user-story"></table>');
-    insertElement(table, '<thead><tr><th colspan="2">' + packageStr(userStory) + '</th></tr></thead>');
+    let tableClasses = 'user-story';
+    if (userStory['status'] === 'Rejected') {
+        tableClasses += ' rejected';
+    }
+    const table = insertElement(container, '<table class="' + tableClasses + '"></table>');
+    insertElement(table, '<thead><tr><th colspan="2">' + packageStr(userStory) + ' - ' + userStory['status'] + '</th></tr></thead>');
     const tableBody = insertElement(table, '<tbody></tbody>');
     if (userStory.as.length > 0 && userStory['i-wantto'].length > 0) {
         insertElement(tableBody, '<tr><td><b>As:</b> ' + userStory.as + '</td><td><b>I want to:</b> ' + userStory['i-wantto'] + '</td></tr>');
@@ -132,7 +142,7 @@ const insertUserStory = (container, userStory) => {
         const dodTable = insertElement(dodTableContainer, '<table class="definition-of-done"></table>');
         insertElement(dodTable, '<thead><tr><th>Task</th><th>State</th><th>Estimated time</th><th>Progress</th></tr></thead>');
         const dodTableBody = insertElement(dodTable, '<tbody></tbody>');
-        userStory.children.forEach((task) => {
+        packageChildren(userStory).forEach((task) => {
             const estimatedTime = (task['estimated-time'] ? task['estimated-time'] : '0');
             userStoryEstimatedTime += parseFloat(estimatedTime);
             insertElement(dodTableBody, '<tr>' +
@@ -152,8 +162,10 @@ const insertUserStory = (container, userStory) => {
 const insertFeatureUserStories = (container, features) => {
     if (checkPackage(features, 1)) {
         const featureContainer = insertArticle(container, packageStr(features), 'feature-user-stories', 'h4');
-        features.children.forEach((userStory) => {
-            insertUserStory(featureContainer, userStory);
+        packageChildren(features).forEach((userStory) => {
+            if (checkPackage(userStory, 0)) {
+                insertUserStory(featureContainer, userStory);
+            }
         });
     }
 };
@@ -161,7 +173,7 @@ const insertFeatureUserStories = (container, features) => {
 const insertEpicUserStories = (container, epic) => {
     if (checkPackage(epic, 2)) {
         const epicContainer = insertArticle(container, packageStr(epic), 'epic-user-stories', 'h3');
-        epic.children.forEach((feature) => {
+        packageChildren(epic).forEach((feature) => {
             insertFeatureUserStories(epicContainer, feature);
         });
     }
