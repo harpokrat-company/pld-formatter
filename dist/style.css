@@ -24,7 +24,6 @@ body {
     table, tbody, thead, tr, td, th {
         break-inside: avoid-page;
         page-break-inside: avoid;
-    /*    TODO !! Not working */
     }
 }
 
@@ -131,7 +130,6 @@ h2 {
 
 .definition-of-done {
     width: 100%;
-    /*table-layout: fixed;*/
 }
 
 .definition-of-done td {
@@ -190,4 +188,10 @@ h2 {
 
 .user-story.rejected .progress-bar {
     background-color: rgba(50, 50, 50, 1);
+}
+
+.final-statistic {
+    color: #555;
+    background-color: transparent;
+    text-align: center;
 }
