@@ -190,8 +190,34 @@ h2 {
     background-color: rgba(50, 50, 50, 1);
 }
 
-.final-statistic {
-    color: #555;
-    background-color: transparent;
+.final-statistics {
+    width: 100%;
+}
+
+.final-statistics td {
+    text-align: right;
+    padding: 0 1mm;
+    width: 20%;
+    vertical-align: top;
+    background-color: rgba(30, 144, 255, .2);
+}
+
+.final-statistics td:first-child {
+    text-align: left;
+    width: 80%;
+}
+
+.final-statistics > tfoot td {
+    padding: 1mm;
+    background-color: rgba(30, 144, 255, .4);
+    color: black;
+    font-weight: bold;
+}
+
+.final-statistics > thead th {
     text-align: center;
+    padding: 1mm;
+    background-color: rgba(30, 144, 255, .4);
+    color: black;
+    font-weight: bold;
 }

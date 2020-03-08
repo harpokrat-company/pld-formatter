@@ -110,9 +110,9 @@ const insertProjectsCards = (projectTree, container) => {
 
 const getProgressBarFromPercent = (percent) =>
     ('<div class="progress-bar-container">' +
-    '<div class="progress-bar" style="width:' + percent + '%"></div>' +
-    '<span>' + percent + '%</span>' +
-    '</div>');
+        '<div class="progress-bar" style="width:' + percent + '%"></div>' +
+        '<span>' + percent + '%</span>' +
+        '</div>');
 
 const getPackagePercent = (workPackage) =>
     (workPackage['status'] === 'Done') ? '100' : workPackage['progress-'];
@@ -128,8 +128,8 @@ const insertUserStory = (container, userStory) => {
     const table = insertElement(container, '<table class="' + tableClasses + '"></table>');
     insertElement(table, '<thead><tr><th colspan="2">' + packageStr(userStory) + ' - ' + userStory['status'] + '</th></tr></thead>');
     const tableBody = insertElement(table, '<tbody></tbody>');
-    if (userStory.assignee.length > 0) {
-        insertElement(tableBody, '<tr><td colspan="2"><b>Assignee:</b>' + userStory.assignee + '</td></tr>');
+    if (userStory.assignee && userStory.assignee.length > 0) {
+        insertElement(tableBody, '<tr><td colspan="2"><b>Assignee:</b> ' + userStory.assignee + '</td></tr>');
     }
     if (userStory.as.length > 0 && userStory['i-wantto'].length > 0) {
         insertElement(tableBody, '<tr><td><b>As:</b> ' + userStory.as + '</td><td><b>I want to:</b> ' + userStory['i-wantto'] + '</td></tr>');
@@ -137,7 +137,7 @@ const insertUserStory = (container, userStory) => {
     if (userStory.description.length > 0) {
         insertElement(tableBody, '<tr><td colspan="2"><b>Description:</b><br>' + userStory.description + '</td></tr>');
     }
-    let userStoryEstimatedTime = 0;
+    let usersEstimatedTime = {'*': 0, 'Unassignee': 0};
     let progress = 0;
     let progressDivider = 0;
     if (checkPackage(userStory, 0)) {
@@ -152,13 +152,21 @@ const insertUserStory = (container, userStory) => {
         insertElement(dodTable, '<thead><tr><th>Task</th><th>Assignee</th><th>State</th><th>Estimated time</th><th>Progress</th></tr></thead>');
         const dodTableBody = insertElement(dodTable, '<tbody></tbody>');
         packageChildren(userStory).forEach((task) => {
+            const estimatedTime = (task['estimated-time'] ? task['estimated-time'] : '0');
             progress += parseFloat(getPackagePercent(task));
             progressDivider += 1;
-            const estimatedTime = (task['estimated-time'] ? task['estimated-time'] : '0');
-            userStoryEstimatedTime += parseFloat(estimatedTime);
+            if (task.assignee && task.assignee.length !== 0) {
+                if (!usersEstimatedTime.hasOwnProperty(task.assignee)) {
+                    usersEstimatedTime[task.assignee] = 0;
+                }
+                usersEstimatedTime[task.assignee] += parseFloat(estimatedTime);
+            } else {
+                usersEstimatedTime['Unassignee'] += parseFloat(estimatedTime);
+            }
+            usersEstimatedTime['*'] += parseFloat(estimatedTime);
             insertElement(dodTableBody, '<tr>' +
                 '<td>' + packageStr(task) + '</td>' +
-                '<td style="white-space:nowrap;">' + task.assignee + '</td>' +
+                '<td style="white-space:nowrap;">' + (task.assignee ? task.assignee : 'Unassignee') + '</td>' +
                 '<td style="white-space:nowrap;">' + task.status + '</td>' +
                 '<td>' + estimatedTime + ' h/H</td>' +
                 '<td>' + getProgressBar(task) + '</td>' +
@@ -167,20 +175,30 @@ const insertUserStory = (container, userStory) => {
     }
     if (progressDivider !== 0)
         progress = Math.round(progress / progressDivider);
-    userStoryEstimatedTime = Math.round(userStoryEstimatedTime * 10) / 10;
+    usersEstimatedTime['*'] = Math.round(usersEstimatedTime['*'] * 10) / 10;
     const tableFooter = insertElement(table, '<tfoot></tfoot>');
-    insertElement(tableFooter, '<tr><td><b>Estimated time:</b></td><td>' + userStoryEstimatedTime.toString() + ' h/H</td></tr>');
+    insertElement(tableFooter, '<tr><td><b>Estimated time:</b></td><td>' + usersEstimatedTime['*'].toString() + ' h/H</td></tr>');
     insertElement(tableFooter, '<tr><td><b>Progress:</b></td><td>' + getProgressBarFromPercent(progress) + '</td></tr>');
-    return userStoryEstimatedTime;
+    return usersEstimatedTime;
+};
+
+const mergeObjectsSum = (a, b) => {
+    Object.keys(b).forEach((key) => {
+        if (!a.hasOwnProperty(key)) {
+            a[key] = 0;
+        }
+        a[key] += b[key];
+    });
+    return a;
 };
 
 const insertFeatureUserStories = (container, features) => {
-    let totalEstimatedTime = 0;
+    let totalEstimatedTime = {};
     if (checkPackage(features, 1)) {
         const featureContainer = insertArticle(container, packageStr(features), 'feature-user-stories', 'h4');
         packageChildren(features).forEach((userStory) => {
             if (checkPackage(userStory, 0)) {
-                totalEstimatedTime += insertUserStory(featureContainer, userStory);
+                totalEstimatedTime = mergeObjectsSum(totalEstimatedTime, insertUserStory(featureContainer, userStory));
             }
         });
     }
@@ -188,11 +206,11 @@ const insertFeatureUserStories = (container, features) => {
 };
 
 const insertEpicUserStories = (container, epic) => {
-    let totalEstimatedTime = 0;
+    let totalEstimatedTime = {};
     if (checkPackage(epic, 2)) {
         const epicContainer = insertArticle(container, packageStr(epic), 'epic-user-stories', 'h3');
         packageChildren(epic).forEach((feature) => {
-            totalEstimatedTime += insertFeatureUserStories(epicContainer, feature);
+            totalEstimatedTime = mergeObjectsSum(totalEstimatedTime, insertFeatureUserStories(epicContainer, feature));
         });
     }
     return totalEstimatedTime;
@@ -200,22 +218,36 @@ const insertEpicUserStories = (container, epic) => {
 
 const insertProjectUserStories = (container, projectName, projectTree) => {
     const projectContainer = insertArticle(container, projectName, 'project-user-stories');
-    let totalEstimatedTime = 0;
+    let totalEstimatedTime = {};
     projectTree.forEach((epic) => {
-        totalEstimatedTime += insertEpicUserStories(projectContainer, epic);
+        totalEstimatedTime = mergeObjectsSum(totalEstimatedTime, insertEpicUserStories(projectContainer, epic));
     });
     return totalEstimatedTime;
 };
 
 const insertUserStories = (projectTree, container) => {
     const section = insertSection(container, 'User stories', 'user-stories');
-    let totalEstimatedTime = 0;
+    let totalEstimatedTime = {};
     Object.keys(projectTree).forEach((project, id) => {
         if (projectTree[project].some((epic) => checkPackage(epic, 2))) {
-            totalEstimatedTime += insertProjectUserStories(section, project, projectTree[project]);
+            totalEstimatedTime = mergeObjectsSum(totalEstimatedTime, insertProjectUserStories(section, project, projectTree[project]));
         }
     });
-    insertElement(container, '<h2 class="final-statistic">Total estimated time: ' + totalEstimatedTime + ' h/H</h2>');
+    console.log(totalEstimatedTime);
+    insertElement(container, '<h2>Total estimated time</h2>');
+    const statisticsTable = insertElement(container, '<table class="final-statistics"></table>');
+    insertElement(statisticsTable, '<thead><tr><th>Assignee</th><th>Estimated time</th></tr></thead>');
+    const statisticsTableBody = insertElement(statisticsTable, '<tbody></tbody>');
+    Object.keys(totalEstimatedTime).forEach((assignee) => {
+        if (assignee !== '*' && assignee !== 'Unassignee') {
+            insertElement(statisticsTableBody, '<tr>' +
+                '<td>' + assignee + '</td>' +
+                '<td>' + totalEstimatedTime[assignee].toString() + ' h/H</td>' +
+                '</tr>');
+        }
+    });
+    insertElement(statisticsTableBody, '<tr><td>Unassignee</td><td>' + totalEstimatedTime['Unassignee'].toString() + ' h/H</td></tr>');
+    insertElement(statisticsTable, '<tfoot><tr><td>Total</td><td>' + totalEstimatedTime['*'].toString() + ' h/H</td></tr></tfoot>');
 };
 
 const splitInProjects = (projectTree) => {
