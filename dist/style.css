@@ -197,14 +197,12 @@ h2 {
 .final-statistics td {
     text-align: right;
     padding: 0 1mm;
-    width: 20%;
     vertical-align: top;
     background-color: rgba(30, 144, 255, .2);
 }
 
 .final-statistics td:first-child {
     text-align: left;
-    width: 80%;
 }
 
 .final-statistics > tfoot td {

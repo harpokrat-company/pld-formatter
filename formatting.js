@@ -137,7 +137,8 @@ const insertUserStory = (container, userStory) => {
     if (userStory.description.length > 0) {
         insertElement(tableBody, '<tr><td colspan="2"><b>Description:</b><br>' + userStory.description + '</td></tr>');
     }
-    let usersEstimatedTime = {'*': 0, 'Unassignee': 0};
+    let usersEstimatedTime = {'*': [0, 0]};
+    let simpleEstimatedTime = 0;
     let progress = 0;
     let progressDivider = 0;
     if (checkPackage(userStory, 0)) {
@@ -152,32 +153,34 @@ const insertUserStory = (container, userStory) => {
         insertElement(dodTable, '<thead><tr><th>Task</th><th>Assignee</th><th>State</th><th>Estimated time</th><th>Progress</th></tr></thead>');
         const dodTableBody = insertElement(dodTable, '<tbody></tbody>');
         packageChildren(userStory).forEach((task) => {
-            const estimatedTime = (task['estimated-time'] ? task['estimated-time'] : '0');
-            progress += parseFloat(getPackagePercent(task));
+            const estimatedTime = Math.round(parseFloat(task['estimated-time'] ? task['estimated-time'] : '0') * 10) / 10;
+            const doneRatio = parseFloat(getPackagePercent(task)) / 100;
+            const doneTime = Math.round(estimatedTime * doneRatio * 10) / 10;
+            const leftTime = Math.round(estimatedTime * (1 - doneRatio) * 10) / 10;
+            const assignee = ((task.assignee && task.assignee.length !== 0) ? task.assignee : 'Unassignee');
+            progress += doneRatio * 100;
             progressDivider += 1;
-            if (task.assignee && task.assignee.length !== 0) {
-                if (!usersEstimatedTime.hasOwnProperty(task.assignee)) {
-                    usersEstimatedTime[task.assignee] = 0;
-                }
-                usersEstimatedTime[task.assignee] += parseFloat(estimatedTime);
-            } else {
-                usersEstimatedTime['Unassignee'] += parseFloat(estimatedTime);
+            if (!usersEstimatedTime.hasOwnProperty(assignee)) {
+                usersEstimatedTime[assignee] = [0, 0];
             }
-            usersEstimatedTime['*'] += parseFloat(estimatedTime);
+            usersEstimatedTime[assignee][0] += doneTime;
+            usersEstimatedTime[assignee][1] += leftTime;
+            usersEstimatedTime['*'][0] += doneTime;
+            usersEstimatedTime['*'][1] += leftTime;
+            simpleEstimatedTime += estimatedTime;
             insertElement(dodTableBody, '<tr>' +
                 '<td>' + packageStr(task) + '</td>' +
-                '<td style="white-space:nowrap;">' + (task.assignee ? task.assignee : 'Unassignee') + '</td>' +
+                '<td style="white-space:nowrap;">' + assignee + '</td>' +
                 '<td style="white-space:nowrap;">' + task.status + '</td>' +
-                '<td>' + estimatedTime + ' h/H</td>' +
+                '<td>' + estimatedTime.toString() + ' h/H</td>' +
                 '<td>' + getProgressBar(task) + '</td>' +
                 '</tr>');
         });
     }
     if (progressDivider !== 0)
         progress = Math.round(progress / progressDivider);
-    usersEstimatedTime['*'] = Math.round(usersEstimatedTime['*'] * 10) / 10;
     const tableFooter = insertElement(table, '<tfoot></tfoot>');
-    insertElement(tableFooter, '<tr><td><b>Estimated time:</b></td><td>' + usersEstimatedTime['*'].toString() + ' h/H</td></tr>');
+    insertElement(tableFooter, '<tr><td><b>Estimated time:</b></td><td>' + simpleEstimatedTime.toString() + ' h/H</td></tr>');
     insertElement(tableFooter, '<tr><td><b>Progress:</b></td><td>' + getProgressBarFromPercent(progress) + '</td></tr>');
     return usersEstimatedTime;
 };
@@ -185,9 +188,12 @@ const insertUserStory = (container, userStory) => {
 const mergeObjectsSum = (a, b) => {
     Object.keys(b).forEach((key) => {
         if (!a.hasOwnProperty(key)) {
-            a[key] = 0;
+            a[key] = [0, 0];
         }
-        a[key] += b[key];
+        a[key][0] += b[key][0];
+        a[key][0] = Math.round(a[key][0] * 10) / 10;
+        a[key][1] += b[key][1];
+        a[key][1] = Math.round(a[key][1] * 10) / 10;
     });
     return a;
 };
@@ -236,18 +242,30 @@ const insertUserStories = (projectTree, container) => {
     console.log(totalEstimatedTime);
     insertElement(container, '<h2>Total estimated time</h2>');
     const statisticsTable = insertElement(container, '<table class="final-statistics"></table>');
-    insertElement(statisticsTable, '<thead><tr><th>Assignee</th><th>Estimated time</th></tr></thead>');
+    insertElement(statisticsTable, '<thead><tr><th>Assignee</th><th>Done</th><th>Left</th><th>Total</th></tr></thead>');
     const statisticsTableBody = insertElement(statisticsTable, '<tbody></tbody>');
     Object.keys(totalEstimatedTime).forEach((assignee) => {
         if (assignee !== '*' && assignee !== 'Unassignee') {
             insertElement(statisticsTableBody, '<tr>' +
                 '<td>' + assignee + '</td>' +
-                '<td>' + totalEstimatedTime[assignee].toString() + ' h/H</td>' +
+                '<td>' + totalEstimatedTime[assignee][0].toString() + ' h/H</td>' +
+                '<td>' + totalEstimatedTime[assignee][1].toString() + ' h/H</td>' +
+                '<td>' + (Math.round((totalEstimatedTime[assignee][0] + totalEstimatedTime[assignee][1]) * 10) / 10).toString() + ' h/H</td>' +
                 '</tr>');
         }
     });
-    insertElement(statisticsTableBody, '<tr><td>Unassignee</td><td>' + totalEstimatedTime['Unassignee'].toString() + ' h/H</td></tr>');
-    insertElement(statisticsTable, '<tfoot><tr><td>Total</td><td>' + totalEstimatedTime['*'].toString() + ' h/H</td></tr></tfoot>');
+    insertElement(statisticsTableBody, '<tr>' +
+        '<td>Unassignee</td>' +
+        '<td>' + totalEstimatedTime['Unassignee'][0].toString() + ' h/H</td>' +
+        '<td>' + totalEstimatedTime['Unassignee'][1].toString() + ' h/H</td>' +
+        '<td>' + (Math.round((totalEstimatedTime['Unassignee'][0] + totalEstimatedTime['Unassignee'][1]) * 10) / 10).toString() + ' h/H</td>' +
+        '</tr>');
+    insertElement(statisticsTable, '<tfoot><tr>' +
+        '<td>Total</td>' +
+        '<td>' + totalEstimatedTime['*'][0].toString() + ' h/H</td>' +
+        '<td>' + totalEstimatedTime['*'][1].toString() + ' h/H</td>' +
+        '<td>' + (Math.round((totalEstimatedTime['*'][0] + totalEstimatedTime['*'][1]) * 10) / 10).toString() + ' h/H</td>' +
+        '</tr></tfoot>');
 };
 
 const splitInProjects = (projectTree) => {
